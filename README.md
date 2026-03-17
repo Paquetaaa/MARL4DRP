@@ -24,6 +24,7 @@ conda activate env_name
 Run the following commands in the root directory of this repository (where `install.sh` is located):
 
 ```bash
+chmod +x install.sh
 bash install.sh
 ```
 
