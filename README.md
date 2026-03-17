@@ -86,7 +86,7 @@ reward_list:
 
     When an agent stops at current position, ``reward = reward_list["wait”] * speed(default:5)``.
 
-* wait
+* move
 
     When an agent moves, ``reward = reward_list["move”] * speed(default:5)``.
 
