@@ -1,0 +1,87 @@
+{
+  "artifacts": [],
+  "command": "my_main",
+  "experiment": {
+    "base_dir": "/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src",
+    "dependencies": [
+      "numpy==1.26.4",
+      "PyYAML==5.3.1",
+      "sacred==0.8.7",
+      "torch==2.8.0"
+    ],
+    "mainfile": "main.py",
+    "name": "pymarl",
+    "repositories": [],
+    "sources": [
+      [
+        "main.py",
+        "_sources/main_fe63ec197d7d45234cbb0f3693d04d4c.py"
+      ],
+      [
+        "run.py",
+        "_sources/run_26065774bc37be3b53a2389cece7c645.py"
+      ],
+      [
+        "utils/logging.py",
+        "_sources/logging_c5e4eb72527526b53c5189a8a6e9808d.py"
+      ]
+    ]
+  },
+  "heartbeat": "2026-03-17T14:30:36.273084",
+  "host": {
+    "ENV": {},
+    "cpu": "Apple M3",
+    "hostname": "yamaguchiyuushinoMacBook-Pro.local",
+    "os": [
+      "Darwin",
+      "macOS-26.3-arm64-arm-64bit"
+    ],
+    "python_version": "3.9.25"
+  },
+  "meta": {
+    "command": "my_main",
+    "config_updates": {
+      "env_args": {
+        "key": "drp_env:drp-2agent_map_3x3-v2",
+        "state_repre_flag": "onehot_fov",
+        "time_limit": 100
+      }
+    },
+    "named_configs": [],
+    "options": {
+      "--beat-interval": null,
+      "--capture": null,
+      "--comment": null,
+      "--debug": false,
+      "--enforce_clean": false,
+      "--file_storage": null,
+      "--force": false,
+      "--help": false,
+      "--id": null,
+      "--loglevel": null,
+      "--mongo_db": null,
+      "--name": null,
+      "--pdb": false,
+      "--print-config": false,
+      "--priority": null,
+      "--queue": false,
+      "--s3": null,
+      "--sql": null,
+      "--tiny_db": null,
+      "--unobserved": false,
+      "COMMAND": null,
+      "UPDATE": [
+        "env_args.time_limit=100",
+        "env_args.key=drp_env:drp-2agent_map_3x3-v2",
+        "env_args.state_repre_flag=onehot_fov"
+      ],
+      "help": false,
+      "with": true
+    }
+  },
+  "resources": [],
+  "result": null,
+  "start_time": "2026-03-17T14:30:11.403555",
+  "status": "INTERRUPTED",
+  "stop_time": "2026-03-17T14:30:36.275989"
+}

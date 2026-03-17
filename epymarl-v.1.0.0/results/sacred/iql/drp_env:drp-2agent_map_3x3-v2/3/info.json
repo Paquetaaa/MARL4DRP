@@ -1,0 +1,70 @@
+{
+  "collision_mean": [
+    1.0
+  ],
+  "collision_mean_T": [
+    48
+  ],
+  "distance_from_start_mean": [
+    0.0
+  ],
+  "distance_from_start_mean_T": [
+    48
+  ],
+  "ep_length_mean": [
+    48.0
+  ],
+  "ep_length_mean_T": [
+    48
+  ],
+  "epsilon": [
+    1.0
+  ],
+  "epsilon_T": [
+    48
+  ],
+  "goal_mean": [
+    0.0
+  ],
+  "goal_mean_T": [
+    48
+  ],
+  "return_mean": [
+    {
+      "dtype": "float64",
+      "py/object": "numpy.float64",
+      "value": -1020.0
+    }
+  ],
+  "return_mean_T": [
+    48
+  ],
+  "return_std": [
+    {
+      "dtype": "float64",
+      "py/object": "numpy.float64",
+      "value": 0.0
+    }
+  ],
+  "return_std_T": [
+    48
+  ],
+  "step_mean": [
+    48.0
+  ],
+  "step_mean_T": [
+    48
+  ],
+  "timeup_mean": [
+    0.0
+  ],
+  "timeup_mean_T": [
+    48
+  ],
+  "wait_mean": [
+    0.0
+  ],
+  "wait_mean_T": [
+    48
+  ]
+}

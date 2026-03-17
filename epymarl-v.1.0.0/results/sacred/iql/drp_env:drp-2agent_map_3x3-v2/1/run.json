@@ -1,0 +1,117 @@
+{
+  "artifacts": [],
+  "command": "my_main",
+  "experiment": {
+    "base_dir": "/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src",
+    "dependencies": [
+      "numpy==2.0.2",
+      "PyYAML==5.3.1",
+      "sacred==0.8.7",
+      "torch==2.8.0"
+    ],
+    "mainfile": "main.py",
+    "name": "pymarl",
+    "repositories": [],
+    "sources": [
+      [
+        "main.py",
+        "_sources/main_fe63ec197d7d45234cbb0f3693d04d4c.py"
+      ],
+      [
+        "run.py",
+        "_sources/run_26065774bc37be3b53a2389cece7c645.py"
+      ],
+      [
+        "utils/logging.py",
+        "_sources/logging_c5e4eb72527526b53c5189a8a6e9808d.py"
+      ]
+    ]
+  },
+  "fail_trace": [
+    "Traceback (most recent call last):\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/sacred/config/captured_function.py\", line 42, in captured_function\n    result = wrapped(*args, **kwargs)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/main.py\", line 38, in my_main\n    run(_run, config, _log)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/run.py\", line 67, in run\n    run_sequential(args=args, logger=logger)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/run.py\", line 97, in run_sequential\n    runner = r_REGISTRY[args.runner](args=args, logger=logger)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/runners/episode_runner.py\", line 15, in __init__\n    self.env = env_REGISTRY[self.args.env](**self.args.env_args)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/envs/__init__.py\", line 14, in env_fn\n    return env(**kwargs)\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/epymarl-v.1.0.0/src/envs/__init__.py\", line 80, in __init__\n    self.original_env = gym.make(f\"{key}\", **kwargs)\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/gym/envs/registration.py\", line 235, in make\n    return registry.make(id, **kwargs)\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/gym/envs/registration.py\", line 129, in make\n    env = spec.make(**kwargs)\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/gym/envs/registration.py\", line 89, in make\n    cls = load(self.entry_point)\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/gym/envs/registration.py\", line 27, in load\n    mod = importlib.import_module(mod_name)\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/importlib/__init__.py\", line 127, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n",
+    "  File \"<frozen importlib._bootstrap>\", line 1030, in _gcd_import\n",
+    "  File \"<frozen importlib._bootstrap>\", line 1007, in _find_and_load\n",
+    "  File \"<frozen importlib._bootstrap>\", line 986, in _find_and_load_unlocked\n",
+    "  File \"<frozen importlib._bootstrap>\", line 680, in _load_unlocked\n",
+    "  File \"<frozen importlib._bootstrap_external>\", line 850, in exec_module\n",
+    "  File \"<frozen importlib._bootstrap>\", line 228, in _call_with_frames_removed\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/drp_env/drp_env.py\", line 8, in <module>\n    from drp_env.EE_map import MapMake\n",
+    "  File \"/Users/yamaguchiyuushi/Downloads/MARL4DRP/MARL4DRP/drp_env/EE_map.py\", line 4, in <module>\n    import matplotlib.pyplot as plt\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/__init__.py\", line 113, in <module>\n    from . import _api, _version, cbook, _docstring, rcsetup\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/rcsetup.py\", line 27, in <module>\n    from matplotlib.colors import Colormap, is_color_like\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/colors.py\", line 56, in <module>\n    from matplotlib import _api, _cm, cbook, scale\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/scale.py\", line 22, in <module>\n    from matplotlib.ticker import (\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/ticker.py\", line 138, in <module>\n    from matplotlib import transforms as mtransforms\n",
+    "  File \"/opt/anaconda3/envs/test/lib/python3.9/site-packages/matplotlib/transforms.py\", line 49, in <module>\n    from matplotlib._path import (\n",
+    "ImportError: numpy.core.multiarray failed to import\n"
+  ],
+  "heartbeat": "2026-03-17T14:29:39.488332",
+  "host": {
+    "ENV": {},
+    "cpu": "Apple M3",
+    "hostname": "yamaguchiyuushinoMacBook-Pro.local",
+    "os": [
+      "Darwin",
+      "macOS-26.3-arm64-arm-64bit"
+    ],
+    "python_version": "3.9.25"
+  },
+  "meta": {
+    "command": "my_main",
+    "config_updates": {
+      "env_args": {
+        "key": "drp_env:drp-2agent_map_3x3-v2",
+        "state_repre_flag": "onehot_fov",
+        "time_limit": 100
+      }
+    },
+    "named_configs": [],
+    "options": {
+      "--beat-interval": null,
+      "--capture": null,
+      "--comment": null,
+      "--debug": false,
+      "--enforce_clean": false,
+      "--file_storage": null,
+      "--force": false,
+      "--help": false,
+      "--id": null,
+      "--loglevel": null,
+      "--mongo_db": null,
+      "--name": null,
+      "--pdb": false,
+      "--print-config": false,
+      "--priority": null,
+      "--queue": false,
+      "--s3": null,
+      "--sql": null,
+      "--tiny_db": null,
+      "--unobserved": false,
+      "COMMAND": null,
+      "UPDATE": [
+        "env_args.time_limit=100",
+        "env_args.key=drp_env:drp-2agent_map_3x3-v2",
+        "env_args.state_repre_flag=onehot_fov"
+      ],
+      "help": false,
+      "with": true
+    }
+  },
+  "resources": [],
+  "result": null,
+  "start_time": "2026-03-17T14:29:39.258372",
+  "status": "FAILED",
+  "stop_time": "2026-03-17T14:29:39.489194"
+}
