@@ -26,7 +26,7 @@ class DrpEnv(gym.Env):
 		self.n_agents = agent_num # for epymarl
 		self.state_repre_flag = state_repre_flag
 		self.map_name = map_name
-		self.speed = speed
+		self.speed = speed 
 		self.visu_delay = visu_delay
 		self.start_ori_array = start_ori_array
 		self.goal_array = goal_array
@@ -239,6 +239,7 @@ class DrpEnv(gym.Env):
 				team_reward += ri
 				ri_array.append(ri)
 			
+			## Check if all reach goal
 			if self.terminated == [True for _ in range(self.agent_num)]: # all reach goal
 				print("!!!all reach goal!!!")
 				self.reach_account = 0

@@ -198,6 +198,7 @@ class MapMake():
 		plt.pause(delay)  #do not need 'plt.show()' to show
 		plt.cla() #clear axis not plt
 
+	## 
 	def get_avail_action_fun(self, obs_i, current_start, current_goal, goal_i):
 		#if s==self.pos[goal_i] and goal_i==0:
 		if [obs_i[0],obs_i[1]]==self.pos[goal_i]:
@@ -207,6 +208,8 @@ class MapMake():
 		action_set = []
 		#print(s,pos.values())
 		#print("[obs_i[0],obs_i[1]] pos.values()",[obs_i[0],obs_i[1]],self.pos.values())
+
+		## If the agent is on any node, it can move to all neighboring nodes
 		if str([obs_i[0],obs_i[1]]) in [str(ele) for ele in self.pos.values()]: #s=(0.0, 5.0)
 			#print("it currently at node")
 			node = [k for k, v in self.pos.items() if str(v) == str([obs_i[0],obs_i[1]])][0]  #node 0
@@ -221,6 +224,7 @@ class MapMake():
 						action_set.append(list(edge)[1])
 			action_set.append(node)
 
+		## Else it can only move to the node it's aiming at
 		else:
 			#print("it currently NOT at node")
 			# action_set=[current_start ,current_goal]
@@ -240,7 +244,8 @@ class MapMake():
 				distance_ij = math.dist(pos_i, pos_j) 
 				#print( "distance i j",distance_ij)
 
-				if distance_ij<5:
+				if distance_ij<5: ## 5 is the Distance an agent moves in one step
+
 					collision_flag = 1
 					print('!!!collision!!! with agent',i,j)
 		
