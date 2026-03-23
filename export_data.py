@@ -1,0 +1,87 @@
+import argparse
+import os
+from tensorboard.backend.event_processing import event_accumulator
+import matplotlib.pyplot as plt
+
+# Argtument parser setup
+parser = argparse.ArgumentParser(description="Plot TensorBoard data with optional tag selection")
+parser.add_argument('--tags', nargs='*', help='List of tags to plot (if not specified, all tags are plotted)')
+parser.add_argument('--list-tags', action='store_true', help='List all available tags and exit')
+parser.add_argument('--list-seeds', action='store_true', help='List all available seed folders and exit')
+parser.add_argument('--seed', nargs='*', help='Seed number(s) (e.g., 197655404). Can specify multiple seeds to plot the same tags across experiments.')
+args = parser.parse_args()
+
+# Logdir path setup
+base_log_path = "/Users/lucas/Desktop/DRP/MARL4DRP/epymarl/results/tb_logs/"
+
+if args.list_seeds:
+    print(" Available seed folders:")
+    try:
+        seeds = [d for d in os.listdir(base_log_path) if os.path.isdir(os.path.join(base_log_path, d))]
+        for seed in sorted(seeds):
+            print(f"  - {seed}")
+    except FileNotFoundError:
+        print("Logdir unavailable. Please check the path and try again.")
+    exit(0)
+
+if not args.seed:
+    print("Error: You must specify at least one seed number with --seed. Use --list-seeds to see available options.")
+    exit(1)
+
+if args.list_tags and len(args.seed) > 1:
+    print("Error: --list-tags can only be used with a single seed.")
+    exit(1)
+
+# Collect data from all seeds
+all_data = {}
+for seed in args.seed:
+    # Find the folder that contains the seed
+    try:
+        folders = [d for d in os.listdir(base_log_path) if os.path.isdir(os.path.join(base_log_path, d)) and f"_seed{seed}_" in d]
+        if not folders:
+            print(f"No folder found for seed {seed}.")
+            continue
+        elif len(folders) > 1:
+            print(f"Multiple folders found for seed {seed}: {folders}")
+            continue
+        log_path = os.path.join(base_log_path, folders[0])
+    except FileNotFoundError:
+        print(f"Logdir unavailable for seed {seed}.")
+        continue
+
+    ea = event_accumulator.EventAccumulator(log_path)
+    ea.Reload()
+
+    tags = ea.Tags()['scalars']
+
+    if args.list_tags:
+        print(f"Tags disponibles pour seed {seed} :")
+        for tag in tags:
+            print(f"  - {tag}")
+        exit(0)
+
+    # Filter tags
+    if args.tags:
+        selected_tags = [tag for tag in args.tags if tag in tags]
+        if not selected_tags:
+            print(f"None of the specified tags were found in the data for seed {seed}.")
+            continue
+    else:
+        selected_tags = tags
+
+    for tag in selected_tags:
+        events = ea.Scalars(tag)
+        key = f"{tag} (seed {seed})"
+        all_data[key] = [(e.step, e.value) for e in events]
+
+# Tracer les courbes
+for label, values in all_data.items():
+    steps = [v[0] for v in values]
+    vals = [v[1] for v in values]
+    plt.plot(steps, vals, label=label)
+
+plt.legend()
+plt.xlabel("Episodes")
+plt.ylabel("Value")
+plt.title(f"Selected Tags : {', '.join(args.tags)}")
+plt.show()
