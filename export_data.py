@@ -84,4 +84,17 @@ plt.legend()
 plt.xlabel("Episodes")
 plt.ylabel("Value")
 plt.title(f"Selected Tags : {', '.join(args.tags)}")
+
+# Save figure automatically
+output_dir = "/Users/lucas/Desktop/DRP/MARL4DRP/results/plot_exports"
+os.makedirs(output_dir, exist_ok=True)
+
+# Build a safe output filename
+seed_part = "-".join(args.seed)
+tag_part = "-".join(args.tags) if args.tags else "all-tags"
+output_path = os.path.join(output_dir, f"plot_{seed_part}_{tag_part}.png")
+
+plt.savefig(output_path, bbox_inches='tight')
+print(f"Graph saved to: {output_path}")
+
 plt.show()
