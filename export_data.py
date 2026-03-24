@@ -9,6 +9,7 @@ parser.add_argument('--tags', nargs='*', help='List of tags to plot (if not spec
 parser.add_argument('--list-tags', action='store_true', help='List all available tags and exit')
 parser.add_argument('--list-seeds', action='store_true', help='List all available seed folders and exit')
 parser.add_argument('--seed', nargs='*', help='Seed number(s) (e.g., 197655404). Can specify multiple seeds to plot the same tags across experiments.')
+parser.add_argument('--curve-labels', nargs='*', help='Custom labels for the curves (must match the number of seeds)')
 args = parser.parse_args()
 
 # Logdir path setup
@@ -23,6 +24,16 @@ if args.list_seeds:
     except FileNotFoundError:
         print("Logdir unavailable. Please check the path and try again.")
     exit(0)
+
+if args.curve_labels and len(args.curve_labels) != len(args.seed):
+    print("Error: The number of curve labels must match the number of seeds.")
+    exit(1)
+
+# Create seed to label mapping if custom labels provided
+seed_to_label = {}
+if args.curve_labels:
+    seed_to_label = dict(zip(args.seed, args.curve_labels))
+
 
 if not args.seed:
     print("Error: You must specify at least one seed number with --seed. Use --list-seeds to see available options.")
@@ -71,10 +82,11 @@ for seed in args.seed:
 
     for tag in selected_tags:
         events = ea.Scalars(tag)
-        key = f"{tag} (seed {seed})"
+        label_base = seed_to_label.get(seed, f"seed {seed}")
+        key = f"{tag} ({label_base})"
         all_data[key] = [(e.step, e.value) for e in events]
 
-# Tracer les courbes
+# Plotting
 for label, values in all_data.items():
     steps = [v[0] for v in values]
     vals = [v[1] for v in values]
@@ -83,18 +95,18 @@ for label, values in all_data.items():
 plt.legend()
 plt.xlabel("Episodes")
 plt.ylabel("Value")
-plt.title(f"Selected Tags : {', '.join(args.tags)}")
+plt.title(f"{', '.join(args.tags)}")
 
 # Save figure automatically
 output_dir = "/Users/lucas/Desktop/DRP/MARL4DRP/results/plot_exports"
 os.makedirs(output_dir, exist_ok=True)
 
 # Build a safe output filename
-seed_part = "-".join(args.seed)
+seed_part = ",".join(seed_to_label.get(seed, seed).replace(" ", "-") for seed in args.seed)
 tag_part = "-".join(args.tags) if args.tags else "all-tags"
 output_path = os.path.join(output_dir, f"plot_{seed_part}_{tag_part}.png")
 
 plt.savefig(output_path, bbox_inches='tight')
 print(f"Graph saved to: {output_path}")
 
-plt.show()
+#plt.show()
