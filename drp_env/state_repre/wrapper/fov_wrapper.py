@@ -20,7 +20,7 @@ def neighbor_filter_obs(env, state_repre_flag):
         if len(edge_or_node)==1:
             node = edge_or_node[0]
             pos = {"type": "n", "pos": node}
-            obs_i = np.array(obs_i)*agent_num
+            obs_i = np.array(obs_i)*agent_num # if there is an agent on the node, obs_i[node] = agent_num, else obs_i[node] = 0
         else:
             edge = edge_or_node
             pos = {"type": "e", "pos": edge, "current_goal": env.current_goal[i], "current_start": env.current_start[i], "obs": obs_i}
@@ -51,13 +51,13 @@ def neighbor_filter_obs(env, state_repre_flag):
 
 def get_nodes_to_be_consideration(agent_pos, graph):
     if agent_pos["type"]=="n":
-        start_node = agent_pos["pos"]
-        target_node = list(nx.neighbors(graph, start_node))
+        start_node = agent_pos["pos"] #Actual node position
+        target_node = list(nx.neighbors(graph, start_node)) #One-hop neighbors of the node position
     elif agent_pos["type"]=="e":
-        start_node = agent_pos["current_goal"]
+        start_node = agent_pos["current_goal"] 
         node_set = set(nx.neighbors(graph, start_node))
         node_set.discard(agent_pos["current_start"])
-        target_node = list(node_set)
+        target_node = list(node_set) # One-hop neighbors of the current goal node, excluding the current start node
     return start_node, target_node
 
 # return [ (0 or -1) * n_nodes ] * agent_num

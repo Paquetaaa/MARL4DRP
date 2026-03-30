@@ -1,4 +1,4 @@
-# register
+# register 40+ Gym environments with different agent numbers and maps
 from gym.envs.registration import register
 from itertools import product
 
