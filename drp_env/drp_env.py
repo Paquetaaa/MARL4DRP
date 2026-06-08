@@ -78,8 +78,15 @@ class DrpEnv(gym.Env):
 
 	def _get_avail_agent_actions(self, agent_id, n_actions):
 		avail_actions = self.ee_env.get_avail_action_fun(self.obs[agent_id], self.current_start[agent_id], self.current_goal[agent_id], self.goal_array[agent_id])
+		print(f"DEBUG ag={agent_id} avail={avail_actions} "
+      f"types={[type(x).__name__ for x in avail_actions]} "
+      f"pos={self.obs[agent_id][:2].tolist()} "
+      f"start={self.current_start[agent_id]} "
+      f"goal_cur={self.current_goal[agent_id]} "
+      f"goal_final={self.goal_array[agent_id]} "
+      f"G_first_node={list(self.G.nodes())[:3]}", flush=True)
 		avail_actions_one_hot = np.zeros(n_actions)
-		avail_actions_one_hot[avail_actions] = 1
+		avail_actions_one_hot[avail_actions] = 1 
 		return avail_actions_one_hot, avail_actions
 	
 	def get_avail_agent_actions(self, agent_id, n_actions):
