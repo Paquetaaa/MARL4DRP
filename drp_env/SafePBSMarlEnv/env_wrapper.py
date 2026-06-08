@@ -12,7 +12,6 @@ from drp_env.drp_env import DrpEnv
 
 PROBA_MECANISM = True
 SORTING_MECANISM = True
-HORIZON = 50001 
 
 
 class _PBS:
@@ -35,8 +34,10 @@ class _PBS:
 
 class SafePBSEnv(DrpEnv):
 
-	def __init__(self, *args, **kwargs):
+	def __init__(self, *args,horizon=2_050_000, **kwargs):
 		super().__init__(*args, **kwargs)
+		self.horizon = horizon
+		self.global_step = 0
 		log_dir = os.path.join(os.path.dirname(__file__), "..", "..", "diagnostics")
 		os.makedirs(log_dir, exist_ok=True)
 		self._diag_path = os.path.join(log_dir, f"run_{int(time.time())}.csv")
@@ -103,10 +104,10 @@ class SafePBSEnv(DrpEnv):
 		return i if self.priority_key[i] < self.priority_key[j] else j
 	
 	def proba_function(self,x):
-		return 0.9 * (1 - math.log(1 + x) / math.log(HORIZON))
+		return 0.9 * (1 - math.log(1 + x) / math.log(self.horizon))
 	
 	def guidance_proba(self):
-		x = self.episode_account
+		x = self.global_step
 		proba = max(0.0, self.proba_function(x)) if PROBA_MECANISM else 0.0
 		return proba
 	
@@ -147,6 +148,7 @@ class SafePBSEnv(DrpEnv):
 
 	def step(self, joint_action):
 
+		self.global_step += 1
 		task_assign = None
 		if isinstance(joint_action, dict):
 			task_assign = joint_action.get("task", None)
@@ -158,7 +160,7 @@ class SafePBSEnv(DrpEnv):
 		if np.random.rand() < p:
 			self._epi_expert_steps += 1
 			for i in range(self.agent_num):
-				joint_action[i] = self.expert_action(i)
+				joint_action[i] = self.expert_action(i) ### Tous les agents suivent l'expert à ce step avec une proba p.
 		##### FIN MODE PER STEP #### 
 
 		#### MODE PER-EPISODE ####
