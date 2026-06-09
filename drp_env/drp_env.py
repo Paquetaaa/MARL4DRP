@@ -78,13 +78,17 @@ class DrpEnv(gym.Env):
 
 	def _get_avail_agent_actions(self, agent_id, n_actions):
 		avail_actions = self.ee_env.get_avail_action_fun(self.obs[agent_id], self.current_start[agent_id], self.current_goal[agent_id], self.goal_array[agent_id])
-		print(f"DEBUG ag={agent_id} avail={avail_actions} "
-      f"types={[type(x).__name__ for x in avail_actions]} "
-      f"pos={self.obs[agent_id][:2].tolist()} "
-      f"start={self.current_start[agent_id]} "
-      f"goal_cur={self.current_goal[agent_id]} "
-      f"goal_final={self.goal_array[agent_id]} "
-      f"G_first_node={list(self.G.nodes())[:3]}", flush=True)
+
+		if None in avail_actions:
+			print(f"[BUG] None encore présent ! ag={agent_id} pos={self.obs[agent_id][:2].tolist()} avail={avail_actions}")
+    		
+		# 	print(f"DEBUG ag={agent_id} avail={avail_actions} "
+		#   f"types={[type(x).__name__ for x in avail_actions]} "
+		#   f"pos={self.obs[agent_id][:2].tolist()} "
+		#   f"start={self.current_start[agent_id]} "
+		#   f"goal_cur={self.current_goal[agent_id]} "
+		#   f"goal_final={self.goal_array[agent_id]} "
+		#   f"G_first_node={list(self.G.nodes())[:3]}", flush=True)
 		avail_actions_one_hot = np.zeros(n_actions)
 		avail_actions_one_hot[avail_actions] = 1 
 		return avail_actions_one_hot, avail_actions
@@ -269,26 +273,25 @@ class DrpEnv(gym.Env):
 		return obs, ri_array, self.terminated, info
 
 
+	## Moddified reward function due to upgrade to numpy > 2.0, which does not support list index with numpy.int64
 	def reward(self, i):
-		pre_pos_agenti = [self.obs_current_chache[i][0],self.obs_current_chache[i][1]]
-		pos_agenti = [self.obs[i][0],self.obs[i][1]]
+		pre_pos_agenti = [float(self.obs_current_chache[i][0]), float(self.obs_current_chache[i][1])]
+		pos_agenti = [float(self.obs[i][0]), float(self.obs[i][1])]
 
-		if str(pos_agenti)==str(self.pos[self.goal_array[i]]): # at goal
-			if pre_pos_agenti!=pos_agenti : #first time to reach goal 
+		if pos_agenti == self.pos[self.goal_array[i]]:   # comparaison directe, plus de str
+			if pre_pos_agenti != pos_agenti:
 				r_i = self.r_goal
 				self.reach_account += 1
 				self.terminated[i] = True
-			else: # stop at goal
-				r_i = 0   
-				# self.distance_from_start[i] -= self.speed
-		
-		else: #at a general node 
-			if pre_pos_agenti==pos_agenti: # stop at a general node 
-				r_i = self.r_wait*self.speed
-			else: # just move 
-				r_i = self.r_move*self.speed
-			
+			else:
+				r_i = 0
+		else:
+			if pre_pos_agenti == pos_agenti:
+				r_i = self.r_wait * self.speed
+			else:
+				r_i = self.r_move * self.speed
 		return r_i
+
 
 
 	def render(self, mode='human'):

@@ -13,3 +13,4 @@ log_interval: 50000
 runner_log_interval: 10000
 learner_log_interval: 10000
 t_max: 2050000
+horizon: 2050000

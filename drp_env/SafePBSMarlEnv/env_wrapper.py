@@ -118,30 +118,22 @@ class SafePBSEnv(DrpEnv):
 			return here
 		return p[1] if len(p) > 1 else goal
 
-	def expert_action(self, i):
+	def expert_action(self, i, rl_action):
 		if self.current_goal[i] is not None:
 			return self.current_goal[i]
 		here = self.current_start[i]
 		goal = self.goal_array[i]
 		if here == goal:
 			return goal
-
-		# Si PBS a échoué OU plan vide → fallback shortest-path
-		if self.pbs_paths is None or i not in self.pbs_paths:
-			return self._shortest_path_next(here, goal)
+		if self.pbs_paths is None or i not in self.pbs_paths or here not in self.pbs_paths[i]:
+			return rl_action       # ← abstention : l'expert ne sait plus, RL prend
 		path = self.pbs_paths[i]
-
-		# Si on a dérivé hors du plan → fallback
-		if here not in path:
-			return self._shortest_path_next(here, goal)
-
-		# Avance le pointeur jusqu'à l'index du nœud courant
 		while self.pbs_idx[i] < len(path) - 1 and path[self.pbs_idx[i]] != here:
 			self.pbs_idx[i] += 1
-		# Et un cran de plus pour viser le suivant
 		if self.pbs_idx[i] < len(path) - 1:
 			return path[self.pbs_idx[i] + 1]
-		return goal   # au bout du plan
+		return goal
+
 
 
 
@@ -160,7 +152,7 @@ class SafePBSEnv(DrpEnv):
 		if np.random.rand() < p:
 			self._epi_expert_steps += 1
 			for i in range(self.agent_num):
-				joint_action[i] = self.expert_action(i) ### Tous les agents suivent l'expert à ce step avec une proba p.
+				joint_action[i] = self.expert_action(i, joint_action[i]) ### Tous les agents suivent l'expert à ce step avec une proba p.
 		##### FIN MODE PER STEP #### 
 
 		#### MODE PER-EPISODE ####
