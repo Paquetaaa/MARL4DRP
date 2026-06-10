@@ -13,9 +13,10 @@ paths = {} # Dict, key = Agent_id, value = A* path
 last_episode = -1
 path_idx = {} # Dict, key = Agent_id, value = current node index in paths
 last_node = {} # To detect when an agent has reached its next waypoint
+best_order = None # Order of agents in the best PBS solution found (for priority_key)
 
 WAIT_COST = 1  # Cost of waiting one step
-MAX_ATTEMPT = 10
+MAX_ATTEMPT = 5
 
 
 ## UTILITY FUNCTIONS
@@ -108,10 +109,12 @@ def reshape_graph_from_G(env, G, pos):
 
 ## Priority-Based Search (PBS) implementation
 def priority_based_planning(env, max_horizon=500, max_attempts=MAX_ATTEMPT):
+    global best_order
     import random
     best_paths = None
     best_count = 0
     best_cost = float('inf')
+    best_order = None
     
     for attempt in range(max_attempts):
 
@@ -126,10 +129,17 @@ def priority_based_planning(env, max_horizon=500, max_attempts=MAX_ATTEMPT):
         elif attempt == 1:
             #print("Test centrality order", flush=True)
             # Order by start node centrality (agents starting from more central nodes are more likely to cause conflicts, so we plan them first)
-            centrality = env.centrality_cache
+            centrality = env.centrality_original
             agent_order = sorted(range(env.agent_num),
                                 key=lambda a: -centrality.get(env.current_start[a], 0))
         # Random order
+
+        elif attempt == 2:
+            #print("Test goal-centrality ascending order", flush=True)
+            # Les agents dont le BUT est sur un nœud à haute centralité sont planifiés EN DERNIER priorité PBS la plus basse PBS leur impose des contraintes pour qu'ils n'occupent leur but qu'après que les autres soient passés par ce chokepoint.
+            centrality = env.centrality_original
+            agent_order = sorted(range(env.agent_num),
+                                key=lambda a: centrality.get(env.goal_array[a], 0))
         else:
             # if attempt % 50 == 0:
             #     print("Test random order numero", attempt, flush=True)
@@ -181,11 +191,13 @@ def priority_based_planning(env, max_horizon=500, max_attempts=MAX_ATTEMPT):
                 best_cost = attempt_cost
                 best_paths = paths_pp
                 best_count = success_count
+                best_order = agent_order
                 # print(f"[PBS] attempt {attempt} success_count={success_count} "
                 #       f"cost={attempt_cost} (NEW BEST)", flush=True)
 
         elif success_count > best_count:
             best_count = success_count
+            best_order = agent_order
             best_paths = paths_pp
             # print(f"[PBS] attempt {attempt} success_count={success_count} "
             #       f"(partial best)", flush=True)
@@ -309,8 +321,8 @@ def init(env):
     env.max_edge_w = max((env.G[u][v]['weight'] for u, v in env.G.edges()), default=WAIT_COST)
     env.max_real_t = int(len(env.G.nodes) * env.max_edge_w * env.agent_num * 2)
 
-    if not hasattr(env, "centrality_cache"):
-        env.centrality_cache = nx.degree_centrality(env.G)
+    if not hasattr(env, "centrality_original"):
+        env.centrality_original = nx.degree_centrality(env.G_original)
 
     if not hasattr(env, "shortest_paths_cache"):
         env.shortest_paths_cache = {}

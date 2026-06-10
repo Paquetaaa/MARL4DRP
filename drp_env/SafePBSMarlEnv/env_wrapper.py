@@ -10,8 +10,19 @@ from drp_env.EE_map import MapMake
 from drp_env.drp_env import DrpEnv
 
 
-PROBA_MECANISM = True
+#### Three mechanisms to modulate the expert guidance :
+#### PROBA_MECANISM : if True, the expert action is chosen with a probability that decreases over time. If False, RL action is chosen at every step.
+#### SORTING_MECANISM : if True, the lower-priority agent in a conflict is determined by the PBS order (or the path length if no PBS solution). If False, an arbitrary but fixed priority is used (agent with lower id wins).
+#### USE_PBS_AS_EXPERT : if True, the expert action is computed from the PBS plan. If False, the expert action is the next step on a shortest path (ignoring other agents). This is Loann's original work
+
+## Pure RL RUN :	PROBA_MECANISM = False,SORTING_MECANISM = True, USE_PBS_AS_EXPERT = False
+## Louann's Work : 	PROBA_MECANISM = True, SORTING_MECANISM = True, USE_PBS_AS_EXPERT = False
+## PBS Work : 		PROBA_MECANISM = True, SORTING_MECANISM = True, USE_PBS_AS_EXPERT = True
+
+
+PROBA_MECANISM = False
 SORTING_MECANISM = True
+USE_PBS_AS_EXPERT = False
 
 
 class _PBS:
@@ -52,23 +63,23 @@ class SafePBSEnv(DrpEnv):
 
 	def reset(self):
 		obs = super().reset()
-		self.compute_priority()   # start/goal sont disponibles ici
+		#self.compute_priority()   # start/goal sont disponibles ici
 		self.plan_pbs()
-		self._epi_expert_steps = 0
-
-		#### PASSAGE EN MODE PER-EPISODE ###
-		# if PROBA_MECANISM:
-		# 	p = max(0.0, self.proba_function(self.episode_account))
-		# 	self.follow_expert_this_episode = np.random.rand() < p
-		# else:
-		# 	self.follow_expert_this_episode = False
-
-		#### MODE PER-EPISODE FIN #### 	
-
-		
+		self._epi_expert_steps = 0		
 		return obs
 	
 	def plan_pbs(self):
+
+		# TO COMPARE WITH LOUANN WORK
+		if not USE_PBS_AS_EXPERT:
+			# baseline shortest-path : ni PBS, ni shield aligné PBS → LPF classique
+			self.pbs_paths = None
+			self.pbs_idx = {}
+			self.pbs_full = False
+			self.compute_priority()   # priorité LPF pour le shield
+			return
+
+		## PBS PLANNING
 		if self._pbs_ctx is None:
 			self._pbs_ctx = _PBS(self)
 		self._pbs_ctx.refresh(self)
@@ -80,10 +91,18 @@ class SafePBSEnv(DrpEnv):
 			self.pbs_full = (self.pbs_paths is not None and
                  all(self.pbs_paths.get(a, [None])[-1] == self.goal_array[a]
                      for a in range(self.agent_num)))
+			if hasattr(policy_PBS, 'best_order') and policy_PBS.best_order is not None:
+				rank = {a: -idx for idx, a in enumerate(policy_PBS.best_order)}
+				self.priority_key = [(rank[i], -i) for i in range(self.agent_num)]
+			else:
+				self.compute_priority()
 
 		except Exception as e:
 			self.pbs_paths = None
-			print(f"[PBS] failed, falling backj to shortest-path:{e}", flush = True)
+			self.pbs_idx = {}
+			self.pbs_full = False
+			self.compute_priority()
+			print(f"[PBS] failed: {e}", flush=True)
 
 
 	def compute_priority(self):
@@ -99,9 +118,26 @@ class SafePBSEnv(DrpEnv):
 		self.path_length = lengths  ### On stocke toutes les longueurs dans une variable globale
 		self.priority_key = [(lengths[i], -i) for i in range(self.agent_num)]  ## On classe les agents par longeur de chemin
 
-	def lower_priority(self,i,j):
-		"""Tool which return who as the biggest priority between 2 agents"""
+	def _is_on_plan(self, i):
+		"""Is agent i still on its PBS path ?"""
+		if self.pbs_paths is None or i not in self.pbs_paths:
+			return False
+		return self.current_start[i] in self.pbs_paths[i]
+
+
+	def lower_priority(self, i, j):
+		"""Tool which returns the lower-priority agent between i and j.
+		On-plan agents > off-plan agents. Tie-break by static priority_key."""
+		i_on_plan = self._is_on_plan(i)
+		j_on_plan = self._is_on_plan(j)
+		# off-plan cède face à on-plan
+		if i_on_plan and not j_on_plan:
+			return j
+		if j_on_plan and not i_on_plan:
+			return i
+		# Symétrique : priorité statique (PBS order ou LPF) tranche
 		return i if self.priority_key[i] < self.priority_key[j] else j
+
 	
 	def proba_function(self,x):
 		return 0.9 * (1 - math.log(1 + x) / math.log(self.horizon))
@@ -118,21 +154,33 @@ class SafePBSEnv(DrpEnv):
 			return here
 		return p[1] if len(p) > 1 else goal
 
-	def expert_action(self, i, rl_action):
+	def expert_action(self, i):
+		## If agent has already started crossing an edge, we let it finish
 		if self.current_goal[i] is not None:
 			return self.current_goal[i]
+		# Agent currently on a node, we get its current position, and its goal
 		here = self.current_start[i]
 		goal = self.goal_array[i]
+		## If arrived, stay put
 		if here == goal:
 			return goal
-		if self.pbs_paths is None or i not in self.pbs_paths or here not in self.pbs_paths[i]:
-			return rl_action       # ← abstention : l'expert ne sait plus, RL prend
+
+		### LOUANN WORK 
+		if not USE_PBS_AS_EXPERT:
+			return self._shortest_path_next(here, goal)
+
+		### PBS WORK
+		if self.pbs_paths is None or i not in self.pbs_paths or here not in self.pbs_paths[i]: ## No PBS solution, or agent not on its PBS path
+			return self._shortest_path_next(here, goal)       ## 
 		path = self.pbs_paths[i]
-		while self.pbs_idx[i] < len(path) - 1 and path[self.pbs_idx[i]] != here:
-			self.pbs_idx[i] += 1
-		if self.pbs_idx[i] < len(path) - 1:
-			return path[self.pbs_idx[i] + 1]
-		return goal
+		if here in path:
+			while self.pbs_idx[i] < len(path) - 1 and path[self.pbs_idx[i]] != here:
+				self.pbs_idx[i] += 1
+			if self.pbs_idx[i] < len(path) - 1:
+				return path[self.pbs_idx[i] + 1]
+			return goal
+		else:
+			return self._shortest_path_next(here, goal)
 
 
 
@@ -147,19 +195,12 @@ class SafePBSEnv(DrpEnv):
 			joint_action = joint_action.get("agent", joint_action)
 		do = True
 
-		#### MODE PER-STEP #####
+		## Expert action override with probability 
 		p = self.guidance_proba()
 		if np.random.rand() < p:
-			self._epi_expert_steps += 1
+			self._epi_expert_steps += 1 #Log 
 			for i in range(self.agent_num):
-				joint_action[i] = self.expert_action(i, joint_action[i]) ### Tous les agents suivent l'expert à ce step avec une proba p.
-		##### FIN MODE PER STEP #### 
-
-		#### MODE PER-EPISODE ####
-		# if self.follow_expert_this_episode:
-		# 	for i in range(self.agent_num):
-		# 		joint_action[i] = self.expert_action(i)
-		#### FIN MODE PER-EPISODE #### 
+				joint_action[i] = self.expert_action(i) ### For every agent, we compute the expert action and override the proposed action with it.
 		
 
 
