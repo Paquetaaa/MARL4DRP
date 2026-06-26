@@ -80,7 +80,7 @@ def reshape_graph_from_G(env, G, pos):
             G_new.add_node(new_node, type="intermediate")
 
             #alpha = i / k
-            alpha = (i * speed) / w  # au lieu de i / k
+            alpha = (i * speed) / w  # instead of i / k
             pos_new[new_node] = interpolate(pos_new[u],pos_new[v], alpha)
             #print(f"Creating intermediate node {new_node} between {u} and {v} at position {pos_new[new_node]}")
 
@@ -94,7 +94,7 @@ def reshape_graph_from_G(env, G, pos):
             new_node = f"{v}_{u}_{i}"
             G_new.add_node(new_node, type="intermediate")
             #alpha = i / k
-            alpha = (i * speed) / w  # au lieu de i / k
+            alpha = (i * speed) / w  # instead of i / k
 
             pos_new[new_node] = interpolate(pos_new[v],pos_new[u], alpha)
             #print(f"Creating intermediate node {new_node} between {v} and {u} at position {pos_new[new_node]}")
@@ -136,7 +136,7 @@ def priority_based_planning(env, max_horizon=500, max_attempts=MAX_ATTEMPT):
 
         elif attempt == 2:
             #print("Test goal-centrality ascending order", flush=True)
-            # Les agents dont le BUT est sur un nœud à haute centralité sont planifiés EN DERNIER priorité PBS la plus basse PBS leur impose des contraintes pour qu'ils n'occupent leur but qu'après que les autres soient passés par ce chokepoint.
+            # Agents whose GOAL is on a high-centrality node are planned LAST (lowest PBS priority). PBS imposes constraints so they only occupy their goal after others have passed through that chokepoint.
             centrality = env.centrality_original
             agent_order = sorted(range(env.agent_num),
                                 key=lambda a: centrality.get(env.goal_array[a], 0))
@@ -169,7 +169,7 @@ def priority_based_planning(env, max_horizon=500, max_attempts=MAX_ATTEMPT):
                     if other == agent:
                         continue
                     constraints.add((other, node, t, '-'))
-                    # Blocage proximity
+                    # Proximity blocking
                     for near in nearby:
                         constraints.add((other, near, t, '-'))
             # Goal protection
@@ -226,7 +226,7 @@ def a_star_constrained(env, agent, start, goal, constraints):
         if c[0] == agent and c[3] == '-':
             my_negs.add((c[1], c[2]))
 
-    # Extract goal-times depuis my_negs (au lieu de re-parcourir constraints)
+    # Extract goal-times from my_negs (instead of re-iterating constraints)
     goal_constraints_times = [t for (n, t) in my_negs if n == goal]
     min_goal_arrival = max(goal_constraints_times) + 1 if goal_constraints_times else 0
 
@@ -334,7 +334,7 @@ def init(env):
                 env.shortest_paths_cache[a] = set()
 
 
-    # Précompute proximity (une fois par épisode)
+    # Precompute proximity (once per episode)
     if not hasattr(env, "proximity_cache"):
         env.proximity_cache = {}
         for node in env.G.nodes:

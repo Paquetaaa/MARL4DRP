@@ -20,9 +20,16 @@ from drp_env.drp_env import DrpEnv
 ## PBS Work : 		PROBA_MECANISM = True, SORTING_MECANISM = True, USE_PBS_AS_EXPERT = True
 
 
-PROBA_MECANISM = False
-SORTING_MECANISM = True
-USE_PBS_AS_EXPERT = False
+PROBA_MECANISM = False           # Expert action with certain probability
+SORTING_MECANISM = False         # dynamic priority for shield
+USE_PBS_AS_EXPERT = False       # expert : True = PBS, False = shortest-path 
+
+## Reward shaping mechanism, a bonus reward is given to agent if they get closer to their goal, a malus if they get farther
+
+USE_REWARD_SHAPING = True       # reward shaping potential-based 
+SHAPING_WEIGHT = 1.0            # Shapping bonus magnitude
+GAMMA = 0.99					# args.gamma, needs to match the env gamma
+
 
 
 class _PBS:
@@ -38,7 +45,7 @@ class _PBS:
 		self.current_start = list(env.current_start)
 		self.goal_array = list(env.goal_array)
 		self.episode_account = env.episode_account
-		self.G = env.G ##  Modifié par le reshape
+		self.G = env.G ##  Modified by the reshape
 		self.pos = dict(env.pos)
 
 		
@@ -63,20 +70,32 @@ class SafePBSEnv(DrpEnv):
 
 	def reset(self):
 		obs = super().reset()
-		#self.compute_priority()   # start/goal sont disponibles ici
 		self.plan_pbs()
-		self._epi_expert_steps = 0		
+		self._epi_expert_steps = 0	
+
+		if USE_REWARD_SHAPING:
+			self.dist_to_goal = {}
+			for i in range(self.agent_num):
+				try:
+					lenghts = nx.shortest_path_length(self.G, target=self.goal_array[i], weight='weight') # compute every disatnce to goal node,  return a dict keyed by source to the shortest path length from that source to the target. 
+					self.dist_to_goal[i] = lenghts
+				except nx.NetworkXNoPath:
+					self.dist_to_goal[i] = {}
 		return obs
+	
+	def potential(self, i, node):
+		"""PHI Function phi(s,i) = -d(node, goal_i)"""
+		return -self.dist_to_goal[i].get(node,0.0)
 	
 	def plan_pbs(self):
 
 		# TO COMPARE WITH LOUANN WORK
 		if not USE_PBS_AS_EXPERT:
-			# baseline shortest-path : ni PBS, ni shield aligné PBS → LPF classique
+			# baseline shortest-path: no PBS, no PBS-aligned shield, classic LPF
 			self.pbs_paths = None
 			self.pbs_idx = {}
 			self.pbs_full = False
-			self.compute_priority()   # priorité LPF pour le shield
+			self.compute_priority()   # LPF priority for the shield
 			return
 
 		## PBS PLANNING
@@ -115,8 +134,8 @@ class SafePBSEnv(DrpEnv):
 				lengths.append(path_lenght)
 			except nx.NetworkXNoPath:
 				lengths.append(-1.0) ## No path found (security)
-		self.path_length = lengths  ### On stocke toutes les longueurs dans une variable globale
-		self.priority_key = [(lengths[i], -i) for i in range(self.agent_num)]  ## On classe les agents par longeur de chemin
+		self.path_length = lengths  ### Store all lengths in a global variable
+		self.priority_key = [(lengths[i], -i) for i in range(self.agent_num)]  ## Rank agents by path length
 
 	def _is_on_plan(self, i):
 		"""Is agent i still on its PBS path ?"""
@@ -130,12 +149,12 @@ class SafePBSEnv(DrpEnv):
 		On-plan agents > off-plan agents. Tie-break by static priority_key."""
 		i_on_plan = self._is_on_plan(i)
 		j_on_plan = self._is_on_plan(j)
-		# off-plan cède face à on-plan
+		# off-plan yields to on-plan
 		if i_on_plan and not j_on_plan:
 			return j
 		if j_on_plan and not i_on_plan:
 			return i
-		# Symétrique : priorité statique (PBS order ou LPF) tranche
+		# Symmetric case: static priority (PBS order or LPF) decides
 		return i if self.priority_key[i] < self.priority_key[j] else j
 
 	
@@ -189,6 +208,8 @@ class SafePBSEnv(DrpEnv):
 	def step(self, joint_action):
 
 		self.global_step += 1
+		if USE_REWARD_SHAPING:
+			old_current_start = list(self.current_start) # Capture the state before the step
 		task_assign = None
 		if isinstance(joint_action, dict):
 			task_assign = joint_action.get("task", None)
@@ -213,9 +234,9 @@ class SafePBSEnv(DrpEnv):
 				## CASE 1 : Vertex conflict
 				for j in range(self.agent_num):
 					if j != i and joint_action[i] == joint_action[j]:
-						# i est toujours sur un nœud. j peut être engagé sur une arête.
+						# i is still on a node. j may be engaged on an edge.
 						if self.current_goal[j] is not None:
-							loser = i                         # j engagé, ne peut pas s'écarter → i cède
+							loser = i                         # j is engaged and cannot step aside -> i yields
 						else:
 							i_moves = joint_action[i] != self.current_start[i]
 							j_moves = joint_action[j] != self.current_start[j]
@@ -230,7 +251,7 @@ class SafePBSEnv(DrpEnv):
 								loser = j
 							else:
 								continue
-						if joint_action[loser] != self.current_start[loser]:   # ne change do que si ça bouge
+						if joint_action[loser] != self.current_start[loser]:   # only toggle `do` if it actually moves
 							joint_action[loser] = self.current_start[loser]
 							do = True
 							break
@@ -248,6 +269,12 @@ class SafePBSEnv(DrpEnv):
 		obs, ri_array, self.terminated, info = super().step(joint_action)
 
 
+		if USE_REWARD_SHAPING:
+			for i in range(self.agent_num):
+				phi_old = self.potential(i, old_current_start[i])
+				phi_new = self.potential(i, self.current_start[i])
+				shaping = GAMMA*phi_new - phi_old
+				ri_array[i] += SHAPING_WEIGHT * shaping
 		### LOG ### 
 		if all(self.terminated):
 			info["episode_account"] = self.episode_account

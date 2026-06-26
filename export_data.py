@@ -66,7 +66,7 @@ for seed in args.seed:
     tags = ea.Tags()['scalars']
 
     if args.list_tags:
-        print(f"Tags disponibles pour seed {seed} :")
+        print(f"Available tags for seed {seed}:")
         for tag in tags:
             print(f"  - {tag}")
         exit(0)

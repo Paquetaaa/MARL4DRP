@@ -1,7 +1,9 @@
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import csv
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
 import copy 
 import math
 import sys
@@ -119,8 +121,8 @@ class MapMake():
 		G.add_nodes_from(csv_nodes_number)                                 
 		G.add_edges_from(csv_edges)
 		self.pos = csv_nodes_pos
-		G.add_weighted_edges_from(csv_edges_weights) #(始点，終点，重み)でエッジを設定
-		self.edge_labels = {(i, j): int(w['weight']) for i, j, w in G.edges(data=True)} #エッジラベルの描画時に'weight'の表示を無くすための工夫
+		G.add_weighted_edges_from(csv_edges_weights) # set edges with (source, target, weight)
+		self.edge_labels = {(i, j): int(w['weight']) for i, j, w in G.edges(data=True)} # trick to avoid displaying 'weight' string when drawing edge labels
 		self.G=G
 
 
@@ -128,11 +130,11 @@ class MapMake():
 
 
 	def draw_weighted_graph(self, G ,pos):
-		nx.draw_networkx_nodes(G, pos, node_size=500, node_color='skyblue',edgecolors='skyblue') #ノードを描画
-		nx.draw_networkx_edges(G, pos, width=1) #エッジを描画
-		nx.draw_networkx_labels(G, pos) #（ノードの）ラベルを描画
-		nx.draw_networkx_edge_labels(G, pos, edge_labels=self.edge_labels) #エッジのラベルを描画
-		#nx.draw_networkx_node_labels(G, pos, node_labels=node_labels) #エッジのラベルを描画
+		nx.draw_networkx_nodes(G, pos, node_size=500, node_color='skyblue',edgecolors='skyblue') # draw nodes
+		nx.draw_networkx_edges(G, pos, width=1) # draw edges
+		nx.draw_networkx_labels(G, pos) # draw (node) labels
+		nx.draw_networkx_edge_labels(G, pos, edge_labels=self.edge_labels) # draw edge labels
+		#nx.draw_networkx_node_labels(G, pos, node_labels=node_labels) # draw edge labels
 		nx.draw_networkx(self.G, with_labels = True,pos=self.pos,alpha=0.2, node_size=170, node_color='lightblue')
       
 
@@ -181,8 +183,8 @@ class MapMake():
 			
 			"""
 
-		#plt.xlim(-40,160) #x軸範囲指定
-		#plt.ylim(-10,185) #y軸範囲指定
+		#plt.xlim(-40,160) # x-axis range
+		#plt.ylim(-10,185) # y-axis range
 
 		#plt.gcf().text(0.02, 0.5, "reach_n:"+str(reach_account), fontsize=10)
 		self.ax3.text(-5, 0, "reach_n:"+str(reach_account), fontsize=10)
@@ -192,7 +194,7 @@ class MapMake():
 		
 
 		self.draw_weighted_graph(self.G, self.pos)
-		plt.grid() #グリッド
+		plt.grid() # grid
 		#xtick=np.arange(-1,12, 1)
 		#plt.xticks(xtick)
 		plt.pause(delay)  #do not need 'plt.show()' to show
@@ -200,15 +202,15 @@ class MapMake():
 
 	## 
 	def get_avail_action_fun(self, obs_i, current_start, current_goal, goal_i):
-		# convertit obs_i en floats python — évite le piège numpy 2.x
+		# convert obs_i to python floats - avoids the numpy 2.x pitfall
 		agent_pos = [float(obs_i[0]), float(obs_i[1])]
 
-		if agent_pos == self.pos[goal_i]:        # ← remplace [obs_i[0], obs_i[1]]
+		if agent_pos == self.pos[goal_i]:        # replaces [obs_i[0], obs_i[1]]
 			return [goal_i]
 
 		action_set = []
 
-		if str(agent_pos) in [str(ele) for ele in self.pos.values()]:   # ← idem
+		if str(agent_pos) in [str(ele) for ele in self.pos.values()]:   # same here
 			node = [k for k, v in self.pos.items() if str(v) == str(agent_pos)][0]
 			for edge in self.G.edges():
 				if node in edge:

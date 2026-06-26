@@ -80,7 +80,7 @@ class DrpEnv(gym.Env):
 		avail_actions = self.ee_env.get_avail_action_fun(self.obs[agent_id], self.current_start[agent_id], self.current_goal[agent_id], self.goal_array[agent_id])
 
 		if None in avail_actions:
-			print(f"[BUG] None encore présent ! ag={agent_id} pos={self.obs[agent_id][:2].tolist()} avail={avail_actions}")
+			print(f"[BUG] None still present! ag={agent_id} pos={self.obs[agent_id][:2].tolist()} avail={avail_actions}")
     		
 		# 	print(f"DEBUG ag={agent_id} avail={avail_actions} "
 		#   f"types={[type(x).__name__ for x in avail_actions]} "
@@ -166,7 +166,7 @@ class DrpEnv(gym.Env):
 			# if available ⇢ obs_prepare update by obs_i_
 			else:
 				#self.joint_action_old[i] = joint_action[i]
-				self.current_goal_prepare[i] = joint_action[i] #update 行き先ノード when avable action is taken
+				self.current_goal_prepare[i] = joint_action[i] #update destination node when available action is taken
 				obs_i = self.obs[i]
 		
 				#calculate current distance
@@ -204,14 +204,14 @@ class DrpEnv(gym.Env):
 					self.obs_onehot_prepare[i][int(self.goal_array[i])+len(list(self.G.nodes()))] = 1 #current goal
 					
 					# update current_start only when arrive at node
-					self.current_start_prepare[i] = int(action_i) #update 出発ノード when　行き先ノード　has been arrived
-					self.current_goal_prepare[i] = None #update 行き先ノード when it has been arrived
+					self.current_start_prepare[i] = int(action_i) #update start node when destination node has been reached
+					self.current_goal_prepare[i] = None #update destination node when it has been reached
 
 					self.distance_from_start[i] += dist_to_cgoal
 
 				self.obs_prepare.append(obs_i_)
 		
-		# 2) !!!obs_prepare & obs_onehot_prepare!!! を持って、
+		# 2) Using !!!obs_prepare & obs_onehot_prepare!!!,
 		# second judge whether to !!! obs & obs_onehot !!! according to collision happen
 		collision_flag = self.ee_env.collision_detect(self.obs_prepare)
 		info = {
@@ -278,7 +278,7 @@ class DrpEnv(gym.Env):
 		pre_pos_agenti = [float(self.obs_current_chache[i][0]), float(self.obs_current_chache[i][1])]
 		pos_agenti = [float(self.obs[i][0]), float(self.obs[i][1])]
 
-		if pos_agenti == self.pos[self.goal_array[i]]:   # comparaison directe, plus de str
+		if pos_agenti == self.pos[self.goal_array[i]]:   # direct comparison, no more str conversion
 			if pre_pos_agenti != pos_agenti:
 				r_i = self.r_goal
 				self.reach_account += 1

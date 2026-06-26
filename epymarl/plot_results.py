@@ -35,6 +35,14 @@ def parse_args():
         help="Filter results by algorithm names. Only showing results for algorithms that contain any of the specified strings in their names.",
     )
     parser.add_argument(
+    "--filter_by_seeds",
+    type=int,
+    nargs="+",
+    default=None,
+    help="Only include runs with these seeds",
+    )
+
+    parser.add_argument(
         "--filter_by_envs",
         nargs="+",
         default=[],
@@ -91,7 +99,7 @@ def extract_env_name_from_config(config):
     return env_name
 
 
-def load_results(path, metric):
+def load_results(path, metric,filter_seeds):
     path = Path(path)
     metrics_files = path.glob("**/metrics.json")
 
@@ -110,6 +118,9 @@ def load_results(path, metric):
         else:
             with open(config_file, "r") as f:
                 config = json.load(f)
+                if filter_seeds is not None and config["seed"] not in filter_seeds:
+                    continue
+
 
         if metric in metrics:
             steps = metrics[metric]["steps"]
@@ -350,7 +361,7 @@ def plot_results(data, metric, save_dir, y_min, y_max, log_scale):
 
 def main():
     args = parse_args()
-    data = load_results(args.path, args.metric)
+    data = load_results(args.path, args.metric,filter_seeds=args.filter_by_seeds)
     data = filter_results(data, args.filter_by_algs, args.filter_by_envs)
     data = {
         env_key: {
