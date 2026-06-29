@@ -11,9 +11,11 @@ SAVE_TIMEUP_TRACES = True
 TRACE_SAMPLE_INTERVAL = 500  # Save one timeout over 500
 MAX_TRACES_TO_SAVE = 100
 
-USE_REWARD_SHAPING = False       # reward shaping potential-based 
+USE_REWARD_SHAPING = False       # reward shaping potential-based , not used
 SHAPING_WEIGHT = 1.0            # Shapping bonus magnitude
 GAMMA = 0.99					# args.gamma, needs to match the env gamma
+
+ESCAPE_PENALTY = 50
 
 
 
@@ -120,13 +122,13 @@ class SafeCollisionEnv(DrpEnv):
         rl_action = [int(a) for a in joint_action]
 
         # ANTI-YO-YO 
-        anti_cycle_fired = [0] * self.agent_num
+        anti_yoyo_fired = [0] * self.agent_num
         for i in range(self.agent_num):
             if self.current_goal[i] is None and self._detect_permissive_yo_yo(i):
                 new_act = self._escape_yo_yo(i)
                 if new_act != joint_action[i]:
                     joint_action[i] = new_act
-                    anti_cycle_fired[i] = 1
+                    anti_yoyo_fired[i] = 1
 
 
         # CAPTURE pre-shield 
@@ -161,6 +163,11 @@ class SafeCollisionEnv(DrpEnv):
                                 if task_assign is not None else joint_action)
         obs, ri_array, self.terminated, info = super().step(joint_action_to_pass)
 
+        # === ESCAPE PENALTY ===
+        for i in range(self.agent_num):
+            if anti_yoyo_fired[i]:
+                ri_array[i] -= ESCAPE_PENALTY
+
         # update history (only when on a node)
         for i in range(self.agent_num):
             if self.current_goal[i] is None:
@@ -187,7 +194,7 @@ class SafeCollisionEnv(DrpEnv):
                 "shield_fired": shield_fired,
                 "wait_count": [int(w) for w in self.wait_count],
                 "rl_action": rl_action,
-                "anti_cycle_fired":anti_cycle_fired,
+                "anti_yoyo_fired":anti_yoyo_fired,
             })
 
         # === DUMP on timeup ===

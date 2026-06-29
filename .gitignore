@@ -1,7 +1,27 @@
-MARL4DRP/epymarl/results
-MARL4DRP/results
-/epymarl/results
-/results
-/Papers
-diagnostics/ 
+# === Outputs générés (peuvent peser plusieurs GB) ===
+/diagnostics/
+/results/
+/epymarl/results/
+/epymarl/tb_logs/
 
+# === Python bytecode ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# === macOS ===
+.DS_Store
+
+# === Egg info ===
+*.egg-info/
+
+# === IDE/Editor ===
+.vscode/
+.idea/
+
+# === Divers ===
+/Papers/
+*.log
+*.swp
+*.swo

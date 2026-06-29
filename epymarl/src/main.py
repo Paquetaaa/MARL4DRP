@@ -18,7 +18,7 @@ SETTINGS["CAPTURE_MODE"] = (
 )
 logger = get_logger()
 
-ex = Experiment("pymarl")
+ex = Experiment("pymarl", save_git_info=False)
 ex.logger = logger
 ex.captured_out_filter = apply_backspaces_and_linefeeds
 
